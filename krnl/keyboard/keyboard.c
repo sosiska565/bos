@@ -58,7 +58,7 @@ char scancode_to_ascii(uint8_t scancode) {
     return scancode_table[scancode];
 }
 
-void readString(char *buffer, int max_len, unsigned int color) {
+void get_string(char *buffer) {
     int pos = 0;
     uint8_t scancode;
     char c;
@@ -69,7 +69,7 @@ void readString(char *buffer, int max_len, unsigned int color) {
         if (scancode == 0x0E) {
             if (pos > 0) {
                 pos--;
-                printChar('\b', color);
+                printChar('\b', 0x07);
             }
             continue;
         }
@@ -78,13 +78,13 @@ void readString(char *buffer, int max_len, unsigned int color) {
 
         if (c == '\n') {
             buffer[pos] = '\0';
-            printChar('\n', color);
+            printChar('\n', 0x07);
             return;
         }
 
-        if (c && pos < max_len - 1) {
+        if (c) {
             buffer[pos++] = c;
-            printChar(c, color);
+            printChar(c, 0x07);
         }
     }
 }

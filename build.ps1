@@ -8,6 +8,22 @@ $Linker       = "i686-elf-ld.exe"
 $GccFlags = "-m32 -c -ffreestanding -Wall -Wextra -Ikrnl"
 $NasmFlags = "-f elf32"
 
+# --- Create initrd ---
+Write-Host "Creating initrd..."
+
+# Create a directory for files that will go into the initrd
+New-Item -ItemType Directory -Force -Path "initrd_contents"
+Set-Content -Path "initrd_contents\file1.txt" -Value "This is file1."
+Set-Content -Path "initrd_contents\file2.txt" -Value "This is file2."
+
+# Compile the tool to create the initrd
+gcc .\tools\mkinitrd.c -o .\tools\mkinitrd.exe
+
+# Run the tool to create initrd.img
+.\tools\mkinitrd.exe .\initrd.img .\initrd_contents\file1.txt file1.txt .\initrd_contents\file2.txt file2.txt
+
+# --- End create initrd ---
+
 # Имена файлов и папок
 $BuildDir = "build"
 $KernelBinary = "bos.bin"
@@ -36,7 +52,10 @@ Write-HostColored "--- Compiling all source files ---" "Cyan"
 # Список всех ассемблерных файлов
 $asm_sources = @(
     "boot\boot.asm",
-    "boot\modules\interrupts.asm"
+    "boot\modules\interrupts.asm",
+    "krnl\process\switch.asm",
+    "krnl\process\read_eip.asm",
+    "krnl\gdt\gdt.asm"
 )
 
 # Список всех C-файлов
@@ -48,9 +67,19 @@ $c_sources = @(
     "krnl\interrupts\idt.c",
     "krnl\interrupts\pic.c",
     "krnl\memory\memory.c",
+    "krnl\memory\pmm.c",
+    "krnl\memory\vmm.c",
+    "krnl\memory\heap.c",
+    "krnl\utils\utils.c",
+    "krnl\utils\ordered_array.c",
     "krnl\drivers\pci.c",
     "krnl\drivers\io.c",
-    "krnl\timer\timer.c"
+    "krnl\timer\timer.c",
+    "krnl\process\task.c",
+    "krnl\shell\shell.c",
+    "krnl\fs\vfs.c",
+    "krnl\fs\initrd.c",
+    "krnl\gdt\gdt.c"
 )
 
 # Создаем пустой список для всех объектных файлов, который будем пополнять
@@ -98,9 +127,10 @@ $isoGrubDir = "$isoBootDir\grub"
 if (Test-Path $isoDir) { Remove-Item -Recurse -Force $isoDir }
 New-Item -ItemType Directory -Path $isoDir, $isoBootDir, $isoGrubDir | Out-Null
 
-$grubCfgContent = "set timeout=0`nset default=0`nmenuentry `"BOS`" {`n    multiboot /boot/bos.bin`n    boot`n}"
+$grubCfgContent = "set timeout=0`nset default=0`nmenuentry `"BOS`" {`n    multiboot /boot/bos.bin`n    module /boot/initrd.img`n    boot`n}"
 Set-Content -Path "$isoGrubDir\grub.cfg" -Value $grubCfgContent
 Copy-Item -Path $KernelBinary -Destination $isoBootDir
+Copy-Item -Path ".\initrd.img" -Destination $isoBootDir
 
 $wslIsoDir = wsl wslpath -a $isoDir
 $IsoCommand = "wsl grub-mkrescue -o $IsoBinary $wslIsoDir"

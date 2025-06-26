@@ -54,9 +54,15 @@ if (-not (Test-Path $initrd_contents)) {
     New-Item -ItemType Directory -Path $initrd_contents | Out-Null
     Set-Content -Path "$initrd_contents\hello.txt" -Value "Hello from the initrd!"
 }
-$initrd_files = Get-ChildItem -Path $initrd_contents -File | ForEach-Object { "`"$($_.FullName)`" `"$($_.Name)`"" }
-& $mkinitrd_exe $initrd_img $initrd_files
-if ($LASTEXITCODE -ne 0) {
+
+# Build the argument list for mkinitrd.exe
+$argumentList = @("`"$initrd_img`"")
+Get-ChildItem -Path $initrd_contents -File | ForEach-Object {
+    $argumentList += "`"$($_.FullName)`""
+    $argumentList += "`"$($_.Name)`""
+}
+$process = Start-Process -FilePath $mkinitrd_exe -ArgumentList $argumentList -NoNewWindow -PassThru -Wait
+if ($process.ExitCode -ne 0) {
     Write-Host "FATAL: Failed to create initrd.img" -ForegroundColor Red
     exit 1
 }
@@ -130,4 +136,4 @@ Write-Host "--- Starting QEMU ---" -ForegroundColor Yellow
 $wslIsoFileForQemu = (wsl wslpath -w $IsoFile).Trim()
 Start-Process -FilePath "qemu-system-i386" -ArgumentList "-cdrom `"$wslIsoFileForQemu`""
 
-Write-HostColored "`n--- Script finished ---" "Green"
+Write-Host "`n--- Script finished ---" -ForegroundColor Green

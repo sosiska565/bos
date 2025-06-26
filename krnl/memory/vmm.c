@@ -105,7 +105,7 @@ static page_table_t* clone_table(page_table_t *src, uint32_t *phys, int dir_idx)
     {
         if (src->entry[i])
         {
-            uint32_t new_frame = pmm_alloc_frame() * 0x1000;
+            uint32_t new_frame = pmm_alloc_frame();
             uint32_t flags = src->entry[i] & 0xFFF;
             table->entry[i] = new_frame | flags;
 
@@ -132,15 +132,14 @@ void vmm_page_fault(struct regs* r) {
     int us = r->err_code & 0x4;
     int reserved = r->err_code & 0x8;
 
-    clear(0x04);
-    printString("Page Fault! (", 0x04);
-    if (present) printString("present ", 0x04);
-    if (rw) printString("read-only ", 0x04);
-    if (us) printString("user-mode ", 0x04);
-    if (reserved) printString("reserved ", 0x04);
-    printString(") at ", 0x04);
-    printHex(faulting_address, 0x04);
-    printString("\n", 0x04);
+    vga_print("Page Fault! (");
+    if (present) vga_print("present ");
+    if (rw) vga_print("read-only ");
+    if (us) vga_print("user-mode ");
+    if (reserved) vga_print("reserved ");
+    vga_print(") at ");
+    printHex(faulting_address);
+    vga_print("\n");
     
     for(;;);
 }

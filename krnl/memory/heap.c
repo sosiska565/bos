@@ -1,7 +1,8 @@
 #include "heap.h"
-#include "../utils/utils.h"
-#include "memory.h"
+#include "../../libc/string.h"
+#include "vmm.h"
 #include "pmm.h"
+#include "memory.h"
 
 extern page_directory_t* kernel_directory;
 heap_t *kheap = 0;
@@ -23,7 +24,7 @@ heap_t *create_heap(uint32_t start, uint32_t end_addr, uint32_t max, uint8_t sup
   
   start += sizeof(type_t)*HEAP_INDEX_SIZE;
 
-  if (start & 0xFFFFF000 != 0)
+  if ((start & 0xFFFFF000) != 0)
   {
     start &= 0xFFFFF000;
     start += 0x1000;
@@ -49,7 +50,7 @@ static void expand(uint32_t new_size, heap_t *heap)
        PANIC("New heap size must be greater than current size");
    }
 
-   if (new_size & 0xFFFFF000 != 0)
+   if ((new_size & 0xFFFFF000) != 0)
    {
      new_size &= 0xFFFFF000;
      new_size += 0x1000;
@@ -63,7 +64,7 @@ static void expand(uint32_t new_size, heap_t *heap)
    uint32_t i = old_size;
    while (i < new_size)
    {
-       vmm_map_page(heap->start_address+i, pmm_alloc_frame(), (heap->supervisor)?(PAGE_PRESENT|PAGE_WRITE):(PAGE_PRESENT|PAGE_WRITE|PAGE_USER));
+                   vmm_map_page(vmm_get_dir(), heap->start_address+i, pmm_alloc_frame(), (heap->supervisor)?(PAGE_PRESENT|PAGE_WRITE):(PAGE_PRESENT|PAGE_WRITE|PAGE_USER));
        i += 0x1000;
    }
    heap->end_address = heap->start_address+new_size;
@@ -98,7 +99,7 @@ void *alloc(uint32_t size, uint8_t page_align, heap_t *heap)
 
   uint32_t new_size = size + sizeof(header_t) + sizeof(footer_t);
   int32_t iterator = 0;
-  while (iterator < (int32_t)heap->index.size && (lookup_ordered_array(iterator, &heap->index))->size < new_size)
+      while (iterator < (int32_t)heap->index.size && ((header_t*)lookup_ordered_array(iterator, &heap->index))->size < new_size)
       iterator++;
 
   if (iterator == heap->index.size)

@@ -1,5 +1,5 @@
 #include "heap.h"
-#include "../../libc/string.h"
+#include "../string/string.h"
 #include "vmm.h"
 #include "pmm.h"
 #include "memory.h"

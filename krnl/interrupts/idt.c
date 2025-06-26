@@ -78,7 +78,7 @@ void init_idt(){
 
     idt_flush((uint32_t)&idt_ptr);
 
-    printString("IDT initialized.\n", 0x0A);
+    vga_print("IDT initialized.\n");
 }
 
 void fault_handler(struct regs *r){
@@ -93,17 +93,18 @@ void fault_handler(struct regs *r){
         return;
     }
 
-    clear(0x07);
-    printString("Exception received: ", 0x0C);
-    printDec(r->int_no, 0x0C);
-    printString("\n", 0x0C);
+    vga_clear();
+    vga_print("Exception received: ");
+    printDec(r->int_no);
+    vga_print("\n");
     
     if (r->err_code != 0) {
-        printString("Error Code: ", 0x0C);
-        printHex(r->err_code, 0x0C);
+        vga_print("Error Code: ");
+        printHex(r->err_code);
+        vga_print("\n");
     }
 
-    printString("\nPlease reboot your PC.\n\n", 0x0C);
-    printString("\nSystem halted.\n", 0x0C);
+    vga_print("\nPlease reboot your PC.\n\n");
+    vga_print("\nSystem halted.\n");
     for (;;);
 }

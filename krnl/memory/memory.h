@@ -3,8 +3,10 @@
 
 #include <stddef.h>
 
-void init_memory(void);
-void* kmalloc(size_t size);
-void kfree(void* ptr);
+void* kmalloc(uint32_t size);
+void kfree(void* p);
+void* kmalloc_a(uint32_t size);
+void* kmalloc_p(uint32_t size, uint32_t *phys);
+void* kmalloc_ap(uint32_t size, uint32_t *phys);
 
 #endif

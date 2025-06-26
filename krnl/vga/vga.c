@@ -63,35 +63,35 @@ void printChar(char c, unsigned int color) {
     update_cursor();
 }
 
-void clear(unsigned int color){
+void vga_clear(){
     for(int i = 0; i < VGA_WIDTH * VGA_HEIGHT * 2; i += 2){
         vidmem[i] = ' ';
-        vidmem[i + 1] = color;
+        vidmem[i + 1] = 0x07;
     }
     cursor_pos = 0;
     update_cursor();
 }
 
-void printString(const char *str, unsigned int color){
+void vga_print(const char *str){
     int i = 0;
     while(str[i] != '\0'){
-        printChar(str[i], color);
+        printChar(str[i], 0x07);
         i++;
     }
     update_cursor();
 }
 
-void printDec(int n, const int COLOR){
+void printDec(int n){
     char buffer[50];
     itoa(n, buffer, 10);
-    printString(buffer, COLOR);
+    vga_print(buffer);
 }
 
-void printHex(int n, const int COLOR){
+void printHex(int n){
     char buffer[50];
-    printString("0x", COLOR);
+    vga_print("0x");
     itoa(n, buffer, 16);
-    printString(buffer, COLOR);
+    vga_print(buffer);
 }
 
 void fill_background(int bg_color) {

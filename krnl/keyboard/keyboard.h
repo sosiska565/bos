@@ -4,7 +4,7 @@
 
 uint8_t keyboard_read_scancode(void);
 char scancode_to_ascii(uint8_t scanecode);
-void readString(char *buffer, int max_len, unsigned int color);
+void get_string(char *buffer);
 void init_keyboard();
 
 #endif

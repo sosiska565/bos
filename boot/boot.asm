@@ -9,11 +9,10 @@ extern _OSmain
 
 start:
     cli
-
     mov esp, stack_space
-
+    push eax
+    push ebx
     call _OSmain
-
     hlt
 
 section .bss

@@ -1,25 +1,36 @@
 #include "memory.h"
-#include <stdint.h>
 
-#define KERNEL_HEAP_SIZE (1024 * 1024)
+#include "heap.h"
+#include "vmm.h"
 
-static uint8_t kernel_heap[KERNEL_HEAP_SIZE];
-static uint32_t heap_top = 0;
+extern heap_t *kheap;
 
-void init_memory(void){
-    heap_top = (uint32_t)kernel_heap;
+void* kmalloc(uint32_t size)
+{
+  return alloc(size, 0, kheap);
 }
 
-void* kmalloc(size_t size){
-    if(heap_top + size > (uint32_t)kernel_heap + KERNEL_HEAP_SIZE){
-        return NULL;
-    }
-
-    void* ptr = (void *)heap_top;
-    heap_top += size;
-    return ptr;
+void kfree(void *p)
+{
+  free(p, kheap);
 }
 
-void kfree(void* ptr){
-    (void)ptr;
+void* kmalloc_a(uint32_t size)
+{
+  return alloc(size, 1, kheap);
+}
+
+void* kmalloc_p(uint32_t size, uint32_t *phys)
+{
+  uint32_t mem = (uint32_t)alloc(size, 1, kheap);
+  if (phys)
+  {
+    *phys = vmm_get_physical_address(mem);
+  }
+  return (void*)mem;
+}
+
+void* kmalloc_ap(uint32_t size, uint32_t *phys)
+{
+  return kmalloc_p(size, phys);
 }

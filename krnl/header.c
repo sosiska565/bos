@@ -2,50 +2,53 @@
 
 #include "vga/vga.h"
 #include "keyboard/keyboard.h"
-#include "string/string.h"
 #include "interrupts/idt.h"
 #include "interrupts/pic.h"
-#include "memory/memory.h"
-#include "drivers/pci.h"
 #include "timer/timer.h"
+#include "shell/shell.h"
+#include "drivers/pci.h"
 
-void _OSmain(void){
-    const char *wlc_msg = "Welcome to BOS!\n\n\nType 'help' to get more inforation.\n\n\n";
-    char input_buffer[100];
+#include "memory/pmm.h"
+#include "memory/vmm.h"
+#include "memory/heap.h"
 
-    clear(0x07);
-    printString(wlc_msg, 0x07);
+#include "fs/vfs.h"
+#include "fs/initrd.h"
+#include "multiboot.h"
 
+#include "process/task.h"
+#include "gdt/gdt.h"
+
+void _OSmain(multiboot_info_t* mbd, unsigned int magic)
+{
+    vga_clear();
+    vga_print("Welcome to BOS!\n");
+
+    init_gdt();
     init_idt();
     PIC_remap(0x20, 0x28);
-    init_keyboard();
-    init_memory();
-    init_timer();
+    
+    if (magic != 0x2BADB002) {
+        vga_print("Error: Invalid multiboot magic number!\n");
+        return;
+    }
 
+    pmm_init(mbd);
+    vmm_init();
+    init_heap();
+
+    uint32_t initrd_location = *((uint32_t*)mbd->mods_addr);
+    fs_root = initialise_initrd(initrd_location);
+
+    init_tasking();
+    init_timer();
+    init_keyboard();
+    
+    pci_scan();
 
     __asm__ volatile ("sti");
 
-    pci_scan();
-
-    while(1) {
-        printString("> ", 0x07);
-        readString(input_buffer, sizeof(input_buffer), 0x07);
-
-        if(strcmp(input_buffer, "help") == 0){
-            printString("--Available commands--\n", 0x0A);
-            printString("help - displays all available commands on the screen.\n", 0x07);
-            printString("clear - clear screen.\n", 0x07);
-        }
-        else if(strcmp(input_buffer, "clear") == 0){
-            clear(0x07);
-        }   
-        else{
-            printString("ERR: Unknown command: ", 0x04);
-            printString(input_buffer, 0x04);
-        }
-        
-        printString("\n", 0x07);
-    }
+    init_shell();
     
-    while(1);
+    for(;;);
 }

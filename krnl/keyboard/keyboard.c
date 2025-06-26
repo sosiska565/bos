@@ -1,8 +1,14 @@
 #include "keyboard.h"
 #include "vga/vga.h"
+#include "interrupts/idt.h"
 
 #define KBD_STATUS_PORT 0x64
 #define KBD_DATA_PORT   0x60
+#define KBD_BUFFER_SIZE 256
+
+static char kbd_buffer[KBD_BUFFER_SIZE];
+static uint32_t kbd_read_idx = 0;
+static uint32_t kbd_write_idx = 0;
 
 // Низкоуровневая функция чтения байта из порта
 static inline uint8_t inb(uint16_t port) {
@@ -11,9 +17,33 @@ static inline uint8_t inb(uint16_t port) {
     return data;
 }
 
+void keyboard_callback(struct regs *r){
+    (void)r;
+
+    uint8_t scanecode = inb(0x60);
+
+    if(scanecode & 0x80){
+        return;
+    }
+
+    if((kbd_write_idx + 1) % KBD_BUFFER_SIZE != kbd_read_idx){
+        kbd_buffer[kbd_write_idx] = scanecode;
+        kbd_write_idx = (kbd_write_idx + 1) % KBD_BUFFER_SIZE;
+    }
+}
+
+void init_keyboard(){
+    register_irq_handler(1, keyboard_callback);
+}
+
 uint8_t keyboard_read_scancode(void) {
-    while ((inb(KBD_STATUS_PORT) & 0x01) == 0);
-    return inb(KBD_DATA_PORT);
+    while(kbd_read_idx == kbd_write_idx){
+        __asm__ volatile("hlt");
+    }
+
+    uint8_t scanecode = kbd_buffer[kbd_read_idx];
+    kbd_read_idx = (kbd_read_idx + 1) % KBD_BUFFER_SIZE;
+    return scanecode;
 }
 
 char scancode_to_ascii(uint8_t scancode) {
@@ -35,8 +65,6 @@ void readString(char *buffer, int max_len, unsigned int color) {
 
     while (1) {
         scancode = keyboard_read_scancode();
-        
-        if (scancode & 0x80) continue;
 
         if (scancode == 0x0E) {
             if (pos > 0) {

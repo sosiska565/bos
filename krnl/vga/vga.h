@@ -10,5 +10,7 @@ void printChar(char c, unsigned int color);
 void clear(unsigned int color);
 void printString(const char *str, unsigned int color);
 void fill_background(int bg_color);
+void printDec(int n, const int COLOR);
+void printHex(int n, const int COLOR);
 
 #endif

@@ -1,15 +1,13 @@
 #include "vga.h"
+#include "string/string.h"
 #include <stdint.h>
+#include "drivers/io.h"
 
 char *vidmem = (char *)0xb8000;
 int cursor_pos = 0;
 
 const int VGA_WIDTH = 80;
 const int VGA_HEIGHT = 25;
-
-static inline void outb(uint16_t port, uint8_t data) {
-    __asm__ volatile ("outb %0, %1" : : "a"(data), "Nd"(port));
-}
 
 void update_cursor() {
     uint16_t pos = cursor_pos / 2;
@@ -81,6 +79,19 @@ void printString(const char *str, unsigned int color){
         i++;
     }
     update_cursor();
+}
+
+void printDec(int n, const int COLOR){
+    char buffer[50];
+    itoa(n, buffer, 10);
+    printString(buffer, COLOR);
+}
+
+void printHex(int n, const int COLOR){
+    char buffer[50];
+    printString("0x", COLOR);
+    itoa(n, buffer, 16);
+    printString(buffer, COLOR);
 }
 
 void fill_background(int bg_color) {

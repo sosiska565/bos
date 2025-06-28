@@ -1,4 +1,4 @@
 # bos
 basic operation system
 
-image.png
+![alt text](image.png)

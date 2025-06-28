@@ -52,3 +52,43 @@ char* itoa(int value, char* str, int base){
 
     return str;
 }
+
+int strncmp(const char* s1, const char* s2, int n) {
+    while (n && *s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+        n--;
+    }
+    if (n == 0) {
+        return 0;
+    }
+    return *(unsigned char*)s1 - *(unsigned char*)s2;
+}
+
+// Преобразует строку в целое число (простая реализация)
+int atoi(const char* str) {
+    int res = 0;
+    int sign = 1;
+    int i = 0;
+
+    // Пропускаем пробелы
+    while (str[i] == ' ') {
+        i++;
+    }
+
+    // Обрабатываем знак
+    if (str[i] == '-') {
+        sign = -1;
+        i++;
+    } else if (str[i] == '+') {
+        i++;
+    }
+
+    // Преобразуем цифры
+    while (str[i] >= '0' && str[i] <= '9') {
+        res = res * 10 + (str[i] - '0');
+        i++;
+    }
+
+    return res * sign;
+}

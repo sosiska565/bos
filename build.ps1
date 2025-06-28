@@ -50,7 +50,8 @@ $c_sources = @(
     "krnl\memory\memory.c",
     "krnl\drivers\pci.c",
     "krnl\drivers\io.c",
-    "krnl\timer\timer.c"
+    "krnl\timer\timer.c",
+    "krnl\shell\shell.c"
 )
 
 # Создаем пустой список для всех объектных файлов, который будем пополнять
